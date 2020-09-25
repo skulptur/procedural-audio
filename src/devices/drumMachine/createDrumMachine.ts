@@ -22,10 +22,12 @@ export const createDrumMachine = () => {
     const bpmInSamples = bpmToSamples(sampleRate, bpm) / 4;
     const currentBeat = Math.floor(currentSample / bpmInSamples);
 
+    const start = currentBeat * bpmInSamples
+  
     const withStartDuration = {
       ...props,
-      start: currentBeat * bpmInSamples,
-      duration: bpmInSamples,
+      start,
+      end: start + bpmInSamples,
     };
 
     return (kick(withStartDuration) + closedHat(withStartDuration)) / 2;

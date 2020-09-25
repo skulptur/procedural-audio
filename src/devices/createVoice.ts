@@ -1,4 +1,4 @@
-import { clamp, mapFrom } from "unit-fns";
+import { autoSequence, EventTiming, getNoteProgress } from "./drumMachine/events";
 import { ThingProps, Progress } from "./drumMachine/voices/kick";
 
 type VoiceProps = {
@@ -7,20 +7,11 @@ type VoiceProps = {
   pitch: (props: ThingProps & Progress) => number;
 };
 
-type TimeEvent = {
-  start: number;
-  duration: number;
-};
+const sequence = autoSequence(5000, [0, 1000, 2000, 3000, 4000])
 
 export const createVoice = ({ amplitude, source, pitch }: VoiceProps) => {
-  return (props: ThingProps & TimeEvent) => {
-    const progress = mapFrom(
-      props.start,
-      props.start + props.duration,
-      props.currentSample
-    );
-
-    if (clamp(0, 1, progress) !== progress) return 0;
+  return (props: ThingProps & EventTiming) => {
+    const progress = getNoteProgress(sequence, props.currentSample) || 0
 
     const pitchValue = pitch({
       ...props,
