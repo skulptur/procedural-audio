@@ -1,8 +1,11 @@
-import { clamp } from 'lodash'
+import { clamp, times } from 'lodash'
 import {mapFrom} from 'unit-fns'
 
-export type EventTiming = {
+type EventStart = {
     start: number;
+}
+
+export type EventStartEnd = EventStart & {
     end: number;
 }
 
@@ -12,7 +15,7 @@ export type EventTiming = {
 //     duration: number;
 //   };
 
-export type Sequence = Array<EventTiming>
+export type Sequence = Array<EventStartEnd>
 
 export const createEvent = (start: number, end: number) => {
     return {
@@ -21,16 +24,12 @@ export const createEvent = (start: number, end: number) => {
     }
 }
 
-// provide only start times and end gets created automatically
-export const autoSequence = (duration: number, startTimes: Array<number>) => {
-    const length = startTimes.length
+export const createWithDuration = (start: number, duration: number) => {
+    return createEvent(start, start + duration)
+}
 
-    return startTimes.filter((startTime) => startTime > duration).map((startTime, index) => {
-
-        const nextStart = index < length - 2 ? startTimes[index + 1] : duration;
-        
-        return createEvent(startTime, nextStart)
-    })
+export const setDuration = (evt: EventStartEnd, duration: number) => {
+    return createWithDuration(evt.start, duration)
 }
 
 export const isBetween = (start: number, end: number, value: number) => {
@@ -47,3 +46,26 @@ export const getNoteProgress = (sequence: Sequence, time: number) => {
     return evt ? mapFrom(evt.start, evt.end, time) : null;
 }
 
+
+// provide only start times and end gets created automatically
+export const autoSequence = (duration: number, startTimes: Array<number>) => {
+    const length = startTimes.length
+
+    return startTimes.filter((startTime) => startTime < duration).map((startTime, index) => {
+
+        const nextStart = index < length - 2 ? startTimes[index + 1] : duration;
+        
+        return createEvent(startTime, nextStart)
+    })
+}
+
+export const createSequence = (duration: number, events: number, fn: (t: number) => number) => {
+    // TODO: last item's start time will be duration, not what we want
+    // TODO: remove duplicates
+    const startTimes = times(events, (index) => {
+        const progress = index / events
+        return fn(progress) * duration
+    })
+
+    return autoSequence(duration, startTimes)
+}

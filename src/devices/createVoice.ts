@@ -1,4 +1,4 @@
-import { autoSequence, EventTiming, getNoteProgress } from "./drumMachine/events";
+import {  EventStartEnd, getNoteProgress } from "./drumMachine/events";
 import { ThingProps, Progress } from "./drumMachine/voices/kick";
 
 type VoiceProps = {
@@ -7,22 +7,15 @@ type VoiceProps = {
   pitch: (props: ThingProps & Progress) => number;
 };
 
-const sequence = autoSequence(5000, [0, 1000, 2000, 3000, 4000])
-
 export const createVoice = ({ amplitude, source, pitch }: VoiceProps) => {
-  return (props: ThingProps & EventTiming) => {
-    const progress = getNoteProgress(sequence, props.currentSample) || 0
+  return (props: ThingProps & EventStartEnd & {t: number | null }) => {
+    if(props.t  === null) return 0;
 
-    const pitchValue = pitch({
-      ...props,
-      t: progress,
-    });
+    //@ts-ignore
+    const pitchValue = pitch(props);
+    //@ts-ignore
+    const amplitudeValue = amplitude(props);
 
-    const amplitudeValue = amplitude({
-      ...props,
-      t: progress,
-    });
-
-    return source({ ...props, pitch: pitchValue }) * amplitudeValue;
+    return source({ ...props }) * amplitudeValue;
   };
 };
